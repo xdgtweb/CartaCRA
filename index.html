@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Generador de Texto CRA Mejorado</title>
+<style>
+    :root {
+      --primary: #007aff;
+      --background: #f2f2f7;
+      --white: #ffffff;
+      --text: #1c1c1e;
+      --subtle-text: #6e6e73;
+      --shadow: rgba(0, 0, 0, 0.05);
+      --border: #d1d1d6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      margin: 0;
+      padding: 1rem;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: auto;
+      background: var(--white);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 6px 18px var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 85vh;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      margin: 1rem 0 0.5rem;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    input {
+      width: 95%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f9f9f9;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: #ffffff;
+    }
+
+    .bottom-inputs {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .btn-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      flex: 1;
+      box-shadow: 0 2px 6px var(--shadow);
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #005ecb;
+    }
+
+    #mensaje-copiar {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: green;
+      text-align: center;
+    }
+
+    #output-text {
+      margin-top: 1.5rem;
+      white-space: pre-wrap;
+      font-size: 1rem;
+      background: #f0f0f3;
+      border-radius: 14px;
+      padding: 1rem;
+      height: 240px;
+      overflow-y: auto;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+    }
+
+    #output-text a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    #output-text a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .container {
+        padding: 1rem;
+        border-radius: 16px;
+      }
+
+      h1 {
+        font-size: 1.4rem;
+      }
+
+      .btn-container {
+        flex-direction: column;
+      }
+
+      #output-text {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Generador de Texto CRA Mejorado</h1>
+
+    <div class="top-inputs">
+      <label for="nombreEmpresa">Nombre o Empresa</label>
+      <input type="text" id="nombreEmpresa" placeholder="Ej. Seguridad ABC" />
+    </div>
+
+    <div class="bottom-inputs">
+      <label for="tuNombre">Tu nombre</label>
+      <input type="text" id="tuNombre" placeholder="Ej. Juan Pérez" />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Ej. juan@example.com" />
+
+      <label for="telefono">Teléfono</label>
+      <input type="tel" id="telefono" placeholder="Ej. +34 600 123 456" />
+
+      <label for="nombreProyecto">Nombre del proyecto</label>
+      <input type="text" id="nombreProyecto" placeholder="Ej. CRA Innovador" />
+    </div>
+
+    <div class="btn-container">
+      <button id="btnGenerar">Generar Texto</button>
+      <button id="btnCopiar">Copiar al portapapeles</button>
+      <button id="btnPDF">Descargar PDF Mejorado</button>
+    </div>
+
+    <div id="mensaje-copiar"></div>
+
+    <pre id="output-text" aria-live="polite" aria-label="Texto generado"></pre>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const nombreEmpresaInput = document.getElementById('nombreEmpresa');
+    const tuNombreInput = document.getElementById('tuNombre');
+    const emailInput = document.getElementById('email');
+    const telefonoInput = document.getElementById('telefono');
+    const nombreProyectoInput = document.getElementById('nombreProyecto');
+    const outputText = document.getElementById('output-text');
+    const mensajeCopiar = document.getElementById('mensaje-copiar');
+
+    [nombreEmpresaInput, tuNombreInput, emailInput, telefonoInput, nombreProyectoInput].forEach(input => {
+      const saved = localStorage.getItem(input.id);
+      if(saved) input.value = saved;
+      input.addEventListener('input', () => {
+        localStorage.setItem(input.id, input.value);
+      });
+    });
+
+    // Función para linkificar email o teléfono
+    function linkify(text, type) {
+      if(type === 'email') {
+        return `<a href="mailto:${text}" target="_blank" rel="noopener">${text}</a>`;
+      } else if(type === 'tel') {
+        const telClean = text.replace(/[\s.-]/g, '');
+        return `<a href="tel:${telClean}">${text}</a>`;
+      }
+      return text;
+    }
+
+    function generarTexto() {
+      const nombreEmpresa = nombreEmpresaInput.value.trim();
+      const tuNombre = tuNombreInput.value.trim();
+      const email = emailInput.value.trim();
+      const telefono = telefonoInput.value.trim();
+      const proyecto = nombreProyectoInput.value.trim();
+
+      let texto = '';
+
+      if (nombreEmpresa) texto += `Hola ${nombreEmpresa}:\n\n`;
+
+      texto +=
+        'Estoy creando un programa de gestión y recepción de alarmas (CRA), tomando como referencia muchas de las tecnologías actuales del sector. Lo estoy desarrollando con inteligencia artificial, como cual persona siega el campo de maíz con un tractor: confiando en la tecnología para avanzar con precisión y eficiencia.\n\n' +
+        'El sistema está pensado para ejecutarse en un servidor web seguro y protegido, accesible desde cualquier lugar, y diseñado para que centrales receptoras puedan gestionar eventos de alarma de forma rápida, clara y ordenada.\n\n' +
+        'En esta etapa del proyecto, estoy buscando dispositivos de alarma para realizar pruebas, con el fin de integrarlos al sistema. La idea es que, una vez finalizado, pueda ceder el software a otras centrales, lo que también ayudaría a impulsar las ventas de sus equipos, al estar ya compatibles con una nueva solución.\n\n' +
+        'Si les interesa, puedo mostrarles cómo va el desarrollo, y también me gustaría saber qué ideas o sugerencias podrían aportar, por si ven posibles mejoras o alguna forma de colaboración.\n\n' +
+        'Gracias por su tiempo.\n\n' +
+        'Un saludo,\n' +
+        `${tuNombre ? tuNombre + '\n\n' : '\n\n'}`;
+
+      if(email) texto += email + '\n\n';
+      if(telefono) texto += telefono + '\n\n';
+
+      if(proyecto) texto += proyecto;
+
+      return texto;
+    }
+
+    function mostrarTexto() {
+      const nombreEmpresa = nombreEmpresaInput.value.trim();
+      const tuNombre = tuNombreInput.value.trim();
+      const email = emailInput.value.trim();
+      const telefono = telefonoInput.value.trim();
+      const proyecto = nombreProyectoInput.value.trim();
+
+      let texto = '';
+
+      if (nombreEmpresa) texto += `Hola ${nombreEmpresa}:\n\n`;
+
+      texto +=
+        'Estoy creando un programa de gestión y recepción de alarmas (CRA), tomando como referencia muchas de las tecnologías actuales del sector. Lo estoy desarrollando con inteligencia artificial, como cual persona siega el campo de maíz con un tractor: confiando en la tecnología para avanzar con precisión y eficiencia.\n\n' +
+        'El sistema está pensado para ejecutarse en un servidor web seguro y protegido, accesible desde cualquier lugar, y diseñado para que centrales receptoras puedan gestionar eventos de alarma de forma rápida, clara y ordenada.\n\n' +
+        'En esta etapa del proyecto, estoy buscando dispositivos de alarma para realizar pruebas, con el fin de integrarlos al sistema. La idea es que, una vez finalizado, pueda ceder el software a otras centrales, lo que también ayudaría a impulsar las ventas de sus equipos, al estar ya compatibles con una nueva solución.\n\n' +
+        'Si les interesa, puedo mostrarles cómo va el desarrollo, y también me gustaría saber qué ideas o sugerencias podrían aportar, por si ven posibles mejoras o alguna forma de colaboración.\n\n' +
+        'Gracias por su tiempo.\n\n' +
+        'Un saludo,\n' +
+        `${tuNombre ? tuNombre + '\n\n' : '\n\n'}`;
+
+      // Para que el email y teléfono salgan clicables
+      if(email) texto += linkify(email, 'email') + '\n\n';
+      if(telefono) texto += linkify(telefono, 'tel') + '\n\n';
+
+      if(proyecto) texto += proyecto;
+
+      outputText.innerHTML = texto.replace(/\n/g, '<br>');
+    }
+
+    async function generarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        unit: 'pt',
+        format: 'a4',
+        compress: true
+      });
+
+      const nombreEmpresa = nombreEmpresaInput.value.trim();
+      const tuNombre = tuNombreInput.value.trim();
+      const email = emailInput.value.trim();
+      const telefono = telefonoInput.value.trim();
+      const proyecto = nombreProyectoInput.value.trim();
+
+      const marginLeft = 40;
+      const marginRight = 40;
+      const marginTop = 50;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const maxWidth = pageWidth - marginLeft - marginRight;
+
+      const fontSizeMain = 13;
+      const fontSizeFinal = 11;
+      const lineHeight = 18;
+
+      let cursorY = marginTop;
+
+      function addParagraph(text, fontSize, isBold = false) {
+        doc.setFontSize(fontSize);
+        if (isBold) doc.setFont('helvetica', 'bold');
+        else doc.setFont('helvetica', 'normal');
+
+        const splitted = doc.splitTextToSize(text, maxWidth);
+        splitted.forEach(line => {
+          doc.text(line, marginLeft, cursorY);
+          cursorY += lineHeight;
+        });
+
+        cursorY += lineHeight; // doble espacio
+        doc.setFont('helvetica', 'normal');
+      }
+
+      // Título
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Propuesta de integración CRA', pageWidth / 2, cursorY, { align: 'center' });
+      cursorY += 35;
+
+      if (nombreEmpresa) {
+        addParagraph(`Hola ${nombreEmpresa}:`, fontSizeMain, true);
+        cursorY += 8;
+      }
+
+      const textos = [
+        'Estoy creando un programa de gestión y recepción de alarmas (CRA), tomando como referencia muchas de las tecnologías actuales del sector. Lo estoy desarrollando con inteligencia artificial, como cual persona siega el campo de maíz con un tractor, rapido, con conocimiento y eficazmente.',
+        'El sistema está pensado para ejecutarse en un servidor web seguro y protegido, accesible desde cualquier lugar, y diseñado para que centrales receptoras puedan gestionar eventos de alarma de forma rápida, clara y ordenada.',
+        'En esta etapa del proyecto, estoy buscando dispositivos de alarma para realizar pruebas, con el fin de integrarlos al sistema. La idea es que, una vez finalizado, pueda ceder el software a otras centrales, lo que también ayudaría a impulsar las ventas de sus equipos, al estar ya compatibles con una nueva solución.',
+        'Si les interesa, puedo mostrarles cómo va el desarrollo, y también me gustaría saber qué ideas o sugerencias podrían aportar, por si ven posibles mejoras o alguna forma de colaboración.',
+        'Gracias por su tiempo.',
+        'Un saludo,'
+      ];
+
+      textos.forEach(t => addParagraph(t, fontSizeMain, false));
+
+      // Nombre debajo de "Un saludo,"
+      if(tuNombre){
+        addParagraph(tuNombre, fontSizeFinal, true);
+      }
+
+      // Espacio extra antes de email/teléfono
+      cursorY += 5;
+
+      if(email){
+        doc.setFontSize(fontSizeFinal);
+        doc.setTextColor(0, 102, 204);
+        doc.setFont('helvetica', 'normal');
+        doc.textWithLink(email, marginLeft, cursorY, { url: `mailto:${email}`, maxWidth });
+        cursorY += lineHeight + 5;
+      }
+
+      if(telefono){
+        doc.setFontSize(fontSizeFinal);
+        doc.setTextColor(0, 102, 204);
+        doc.setFont('helvetica', 'normal');
+        const telClean = telefono.replace(/[\s.-]/g, '');
+        doc.textWithLink(telefono, marginLeft, cursorY, { url: `tel:${telClean}`, maxWidth });
+        cursorY += lineHeight + 5;
+      }
+
+      doc.setTextColor(0,0,0);
+
+      if(proyecto){
+        addParagraph(proyecto, fontSizeFinal, true);
+      }
+
+      doc.save('Propuesta_de_integracion_CRA.pdf');
+    }
+
+    document.getElementById('btnGenerar').addEventListener('click', mostrarTexto);
+
+    document.getElementById('btnCopiar').addEventListener('click', () => {
+      const texto = generarTexto();
+      navigator.clipboard.writeText(texto).then(() => {
+        mensajeCopiar.textContent = 'Texto copiado al portapapeles ✅';
+        setTimeout(() => {
+          mensajeCopiar.textContent = '';
+        }, 2500);
+      });
+    });
+
+    document.getElementById('btnPDF').addEventListener('click', generarPDF);
+  </script>
+</body>
+</html>
